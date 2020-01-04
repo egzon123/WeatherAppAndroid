@@ -156,6 +156,7 @@ public class CityFragment extends Fragment {
             });
 
             searchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
+
                 @Override
                 public void onSearchStateChanged(boolean enabled) {
 
@@ -173,6 +174,10 @@ public class CityFragment extends Fragment {
 
                 }
             });
+
+            searchBar.setLastSuggestions(listCity);
+            loading.setVisibility(View.GONE);
+
         }
     }
 
