@@ -58,25 +58,25 @@ public class TodayWeatherFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View iteView = inflater.inflate(R.layout.fragment_today, container, false);
+        View itemView = inflater.inflate(R.layout.fragment_today, container, false);
 
-        img_weather = iteView.findViewById(R.id.img_weather);
-        txt_city_name = iteView.findViewById(R.id.txt_city_name);
-        txt_humidity = iteView.findViewById(R.id.txt_humidity);
-        txt_sunrise = iteView.findViewById(R.id.txt_sunrise);
-        txt_sunset = iteView.findViewById(R.id.txt_sunset);
-        txt_pressure = iteView.findViewById(R.id.txt_pressure);
-        txt_temperature = iteView.findViewById(R.id.text_temperature);
-        txt_description = iteView.findViewById(R.id.txt_description);
-        txt_date_time = iteView.findViewById(R.id.txt_date_time);
-        txt_wind = iteView.findViewById(R.id.txt_wind);
-        txt_geo_coord = iteView.findViewById(R.id.txt_geo_coord);
+        img_weather = itemView.findViewById(R.id.img_weather);
+        txt_city_name = itemView.findViewById(R.id.txt_city_name);
+        txt_humidity = itemView.findViewById(R.id.txt_humidity);
+        txt_sunrise = itemView.findViewById(R.id.txt_sunrise);
+        txt_sunset = itemView.findViewById(R.id.txt_sunset);
+        txt_pressure = itemView.findViewById(R.id.txt_pressure);
+        txt_temperature = itemView.findViewById(R.id.text_temperature);
+        txt_description = itemView.findViewById(R.id.txt_description);
+        txt_date_time = itemView.findViewById(R.id.txt_date_time);
+        txt_wind = itemView.findViewById(R.id.txt_wind);
+        txt_geo_coord = itemView.findViewById(R.id.txt_geo_coord);
 
-        weather_panel = iteView.findViewById(R.id.weather_panel);
-        loading = iteView.findViewById(R.id.loading);
+        weather_panel = itemView.findViewById(R.id.weather_panel);
+        loading = itemView.findViewById(R.id.loading);
         
         getWeatherInformation();
-        return iteView;
+        return itemView;
 
 
     }
@@ -124,5 +124,15 @@ public class TodayWeatherFragment extends Fragment {
 
     }
 
+    @Override
+    public void onDestroy() {
+        compositeDisposable.clear();
+        super.onDestroy();
+    }
 
+    @Override
+    public void onStop() {
+        compositeDisposable.clear();
+        super.onStop();
+    }
 }
