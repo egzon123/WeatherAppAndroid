@@ -6,4 +6,5 @@
     <color name="textColorPrimary">#ffffff</color>
     <color name="windowsBackround">#ffffff</color>
     <color name="navigateBarcolor">#000000</color>
+    <color name="semiTransparentColor">#20ffffff</color>
 </resources>

@@ -3,8 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@drawable/new1"
     android:gravity="center_horizontal"
+
     tools:context=".TodayWeatherFragment">
 
     <LinearLayout
@@ -19,9 +20,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Weather in London ,GB"
-            android:textColor="@color/colorPrimary"
+            android:textColor="@color/white"
             android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textStyle="normal" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -39,10 +40,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
-                android:text="14 C"
-                android:textColor="@color/colorPrimary"
+                android:text="14 °C"
+                android:textColor="@color/white"
+                android:fontFamily="sans-serif-light"
                 android:textSize="50sp"
-                android:textStyle="bold" />
+                android:textStyle="" />
 
         </LinearLayout>
 
@@ -51,7 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Weather in London ,GB"
-            android:textColor="@color/colorPrimary"
+            android:textColor="@color/white"
             android:textSize="18sp"
             android:textStyle="bold" />
         <TextView
@@ -59,9 +61,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Weather in London ,GB"
-            android:textColor="@color/colorPrimary"
+            android:textColor="@color/white"
             android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textStyle="normal" />
         <TableLayout
             android:background="@drawable/border"
             android:layout_marginTop="10dp"

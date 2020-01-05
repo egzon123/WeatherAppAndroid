@@ -117,6 +117,7 @@ public class CityFragment extends Fragment {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
                     builder.append(line);
+                    System.out.println(line);
                     listCities = new Gson().fromJson(builder.toString(), new TypeToken<List<String>>() {
                     }.getType());
                 }
@@ -208,17 +209,19 @@ public class CityFragment extends Fragment {
                         txt_geo_coord.setText(new StringBuilder().append(weatherResult.getCoord().toString()).toString());
 
                         //Display panel
-                        weather_panel.setVisibility(getView().VISIBLE);
+                        weather_panel.setVisibility(View.VISIBLE);
                         loading.setVisibility(View.GONE);
 
                     }
+
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
                         System.out.println("Error ->>>" + throwable.getMessage().toString());
                         Toast.makeText(getActivity(), "" + throwable.getMessage(), Toast.LENGTH_SHORT).show();
                     }
-                }));
+                })
+        );
 
     }
 
