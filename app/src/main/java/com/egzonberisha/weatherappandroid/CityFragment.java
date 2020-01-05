@@ -117,7 +117,7 @@ public class CityFragment extends Fragment {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
                     builder.append(line);
-                    System.out.println(line);
+
                     listCities = new Gson().fromJson(builder.toString(), new TypeToken<List<String>>() {
                     }.getType());
                 }

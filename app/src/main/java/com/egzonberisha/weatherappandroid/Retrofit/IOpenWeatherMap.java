@@ -24,4 +24,5 @@ public interface IOpenWeatherMap {
                                                                  @Query("lon") String lng,
                                                                  @Query("appid") String appid,
                                                                  @Query("units") String unit);
+
 }
