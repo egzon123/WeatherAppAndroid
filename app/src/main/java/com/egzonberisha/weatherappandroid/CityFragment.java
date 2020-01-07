@@ -1,17 +1,30 @@
 package com.egzonberisha.weatherappandroid;
 
 
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
+
+import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.PublishSubject;
 import retrofit2.Retrofit;
 
+import android.os.SystemClock;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +35,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.egzonberisha.weatherappandroid.Common.Common;
+import com.egzonberisha.weatherappandroid.Model.CityDb;
 import com.egzonberisha.weatherappandroid.Model.WeatherResult;
 import com.egzonberisha.weatherappandroid.Retrofit.IOpenWeatherMap;
 import com.egzonberisha.weatherappandroid.Retrofit.RetrofitClient;
@@ -37,6 +51,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 
@@ -46,12 +63,16 @@ import java.util.zip.GZIPInputStream;
 public class CityFragment extends Fragment {
     private List<String> listCities;
     private MaterialSearchBar searchBar;
+    private PublishSubject<String> mPublishSubject;
+    Context thiscontext;
+    List<String> strings;
+
+
 
     ImageView img_weather;
     TextView txt_city_name, txt_humidity, txt_sunrise, txt_sunset, txt_pressure, txt_temperature, txt_description, txt_date_time, txt_wind, txt_geo_coord;
     LinearLayout weather_panel;
     ProgressBar loading;
-
     CompositeDisposable compositeDisposable;
     IOpenWeatherMap mService;
 
@@ -69,6 +90,8 @@ public class CityFragment extends Fragment {
         Retrofit retrofit = RetrofitClient.getInstance();
         mService = retrofit.create(IOpenWeatherMap.class);
 
+
+
     }
 
 
@@ -77,7 +100,6 @@ public class CityFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View itemView = inflater.inflate(R.layout.fragment_city, container, false);
-
 
         img_weather = itemView.findViewById(R.id.img_weather);
         txt_city_name = itemView.findViewById(R.id.txt_city_name);
@@ -94,44 +116,97 @@ public class CityFragment extends Fragment {
         weather_panel = itemView.findViewById(R.id.weather_panel);
         loading = itemView.findViewById(R.id.loading);
         searchBar = itemView.findViewById(R.id.searchBar);
+
+//        initObservable();
+//        listenToSearchInput();
         searchBar.setEnabled(false);
 
-        new LoadCities().execute(); // AsyncTask class to load Cities list
+       new LoadCities().execute(); // AsyncTask class to load Cities list
 
         return itemView;
     }
 
-    private class LoadCities extends SimpleAsyncTask<List<String>> {
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+    }
+
+//    @SuppressLint("CheckResult")
+//    private void initObservable() {
+//        mPublishSubject = PublishSubject.create();
+//        mPublishSubject
+//                .debounce(400, TimeUnit.MILLISECONDS)
+//                .map(searchString)
+//                .subscribeOn(Schedulers.io())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(new Observer<List<String>>() {
+//                    @Override
+//                    public void onSubscribe(Disposable d) {
+//                        compositeDisposable.add(d);
+//                    }
+//
+//                    @Override
+//                    public void onNext(List<String> strings) {
+//                        handleSearchResults(strings);
+//                    }
+//
+//                    @Override
+//                    public void onError(Throwable e) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onComplete() {
+//
+//                    }
+//                });
+//
+//    }
+//
+//    private void handleSearchResults(List<String> strings) {
+//        if (strings.isEmpty()) {
+//
+//        } else {
+//            showSearchResults(strings);
+//        }
+//    }
+//
+//
+//    private void showSearchResults(List<String> cities) {
+//        searchBar.setEnabled(true);
+//        searchBar.setLastSuggestions(cities);
+//    }
+//
+//
+//    Function<String, List<String>> searchString = new Function<String, List<String>>() {
+//        @Override
+//        public List<String> apply(String s) throws Exception {
+//            return null;
+//        }
+//
+//    };
+
+    private class LoadCities extends SimpleAsyncTask<List<CityDb>> {
+
         @Override
-        protected List<String> doInBackgroundSimple() {
-            listCities = new ArrayList<>();
-            try {
-                StringBuilder builder = new StringBuilder();
-                InputStream inputStream = getResources().openRawResource(R.raw.city_list);
-                GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream);
+        protected List<CityDb> doInBackgroundSimple() {
+
+            SqliteHelper sqliteHelper = new SqliteHelper(getContext());
 
 
-                InputStreamReader inputStreamReader = new InputStreamReader(gzipInputStream);
-                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    builder.append(line);
-
-                    listCities = new Gson().fromJson(builder.toString(), new TypeToken<List<String>>() {
-                    }.getType());
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return listCities;
+            return sqliteHelper.getAllCitites();
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
-        protected void onSuccess(final List<String> listCity) {
-            super.onSuccess(listCity);
+        protected void onSuccess(final List<CityDb> listCity) {
 
+            super.onSuccess(listCity);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                strings = listCity.stream()
+                        .map(object -> Objects.toString(object,null))
+                        .collect(Collectors.toList());
+            }
             searchBar.setEnabled(true);
             searchBar.addTextChangeListener(new TextWatcher() {
                 @Override
@@ -141,18 +216,22 @@ public class CityFragment extends Fragment {
 
                 @Override
                 public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
                     List<String> suggest = new ArrayList<>();
-                    for (String search : listCity) {
-                        if (search.toLowerCase().contains(searchBar.getText().toLowerCase())) {
-                            suggest.add(search);
+                    long startTime = SystemClock.elapsedRealtime();
+                    for (CityDb search : listCity) {
+                        if (search.getName().toLowerCase().contains(searchBar.getText().toLowerCase())) {
+                            suggest.add(search.getName());
                         }
                     }
                     searchBar.setLastSuggestions(suggest);
+                    Log.d("CityFragment","Time it took:" + (SystemClock.elapsedRealtime() - startTime));
+
                 }
 
                 @Override
                 public void afterTextChanged(Editable editable) {
-
+//
                 }
             });
 
@@ -163,11 +242,12 @@ public class CityFragment extends Fragment {
 
                 }
 
+
                 @Override
                 public void onSearchConfirmed(CharSequence text) {
                     getWeatherInformation(text.toString());
 
-                    searchBar.setLastSuggestions(listCity);
+                   searchBar.setLastSuggestions(strings);
                 }
 
                 @Override
@@ -176,7 +256,7 @@ public class CityFragment extends Fragment {
                 }
             });
 
-            searchBar.setLastSuggestions(listCity);
+            searchBar.setLastSuggestions(strings);
             loading.setVisibility(View.GONE);
 
         }
@@ -224,6 +304,45 @@ public class CityFragment extends Fragment {
         );
 
     }
+//    private void listenToSearchInput() {
+//        searchBar.addTextChangeListener(new TextWatcher() {
+//                @Override
+//                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+//
+//                }
+//
+//                @Override
+//                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+//
+//                    mPublishSubject.onNext(charSequence.toString());
+//
+//                }
+//
+//                @Override
+//                public void afterTextChanged(Editable editable) {
+//
+//                }
+//            });
+//
+//                    searchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
+//
+//                @Override
+//                public void onSearchStateChanged(boolean enabled) {
+//
+//                }
+//
+//                @Override
+//                public void onSearchConfirmed(CharSequence text) {
+//                    getWeatherInformation(text.toString());
+//                    searchBar.setLastSuggestions(listCities);
+//                }
+//
+//                @Override
+//                public void onButtonClicked(int buttonCode) {
+//
+//                }
+//            });
+//    }
 
     @Override
     public void onDestroy() {

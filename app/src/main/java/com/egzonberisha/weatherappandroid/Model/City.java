@@ -1,9 +1,17 @@
 package com.egzonberisha.weatherappandroid.Model;
 
+import androidx.room.ColumnInfo;
+import androidx.room.Embedded;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
+
 public class City {
+
     private int id;
 
     private String name;
+
 
     private Coord coord;
 

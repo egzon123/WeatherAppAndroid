@@ -1,8 +1,15 @@
 package com.egzonberisha.weatherappandroid.Model;
 
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.Relation;
+
+
 public class Coord {
+
  private float lon;
  private float lat;
+
 
 
  // Getter Methods

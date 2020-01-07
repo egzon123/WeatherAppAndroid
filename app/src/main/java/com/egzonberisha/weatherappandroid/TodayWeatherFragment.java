@@ -31,6 +31,7 @@ import com.squareup.picasso.Picasso;
  * A simple {@link Fragment} subclass.
  */
 public class TodayWeatherFragment extends Fragment {
+
     ImageView img_weather;
     TextView txt_city_name,txt_humidity,txt_sunrise,txt_sunset,txt_pressure,txt_temperature,txt_description,txt_date_time,txt_wind,txt_geo_coord;
     LinearLayout weather_panel;
@@ -99,7 +100,6 @@ public class TodayWeatherFragment extends Fragment {
                             txt_city_name.setText(weatherResult.getName());
                             txt_description.setText(new StringBuilder("Weather in ")
                             .append(weatherResult.getName()).toString());
-
                             txt_temperature.setText(new StringBuilder(String.valueOf((int)(weatherResult.getMain().getTemp()-273))).append("°C").toString());
                             txt_date_time.setText(Common.convertUnixToDate(weatherResult.getDt()));
                             txt_pressure.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getPressure())).append(" hpa").toString());
