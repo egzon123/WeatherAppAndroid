@@ -3,6 +3,7 @@ package com.egzonberisha.weatherappandroid;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -115,6 +116,18 @@ public class SqliteHelper extends SQLiteOpenHelper {
         cursor.close();
 
         return cityDbList;
+    }
+
+    public boolean isEmpty(String TableName){
+
+        SQLiteDatabase database = this.getReadableDatabase();
+        int NoOfRows = (int) DatabaseUtils.queryNumEntries(database,TableName);
+
+        if (NoOfRows == 0){
+            return true;
+        }else {
+            return false;
+        }
     }
 
 }

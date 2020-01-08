@@ -11,12 +11,15 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 import retrofit2.Retrofit;
@@ -55,6 +58,8 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
+
+import static java.lang.System.err;
 
 
 /**
@@ -121,7 +126,7 @@ public class CityFragment extends Fragment {
 //        listenToSearchInput();
         searchBar.setEnabled(false);
 
-       new LoadCities().execute(); // AsyncTask class to load Cities list
+//       new LoadCities().execute(); // AsyncTask class to load Cities list
 
         return itemView;
     }
@@ -130,7 +135,7 @@ public class CityFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
     }
-
+//
 //    @SuppressLint("CheckResult")
 //    private void initObservable() {
 //        mPublishSubject = PublishSubject.create();
@@ -185,82 +190,82 @@ public class CityFragment extends Fragment {
 //        }
 //
 //    };
-
-    private class LoadCities extends SimpleAsyncTask<List<CityDb>> {
-
-        @Override
-        protected List<CityDb> doInBackgroundSimple() {
-
-            SqliteHelper sqliteHelper = new SqliteHelper(getContext());
-
-
-            return sqliteHelper.getAllCitites();
-        }
-
-        @RequiresApi(api = Build.VERSION_CODES.N)
-        @Override
-        protected void onSuccess(final List<CityDb> listCity) {
-
-            super.onSuccess(listCity);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                strings = listCity.stream()
-                        .map(object -> Objects.toString(object,null))
-                        .collect(Collectors.toList());
-            }
-            searchBar.setEnabled(true);
-            searchBar.addTextChangeListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                    List<String> suggest = new ArrayList<>();
-                    long startTime = SystemClock.elapsedRealtime();
-                    for (CityDb search : listCity) {
-                        if (search.getName().toLowerCase().contains(searchBar.getText().toLowerCase())) {
-                            suggest.add(search.getName());
-                        }
-                    }
-                    searchBar.setLastSuggestions(suggest);
-                    Log.d("CityFragment","Time it took:" + (SystemClock.elapsedRealtime() - startTime));
-
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
 //
-                }
-            });
-
-            searchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
-
-                @Override
-                public void onSearchStateChanged(boolean enabled) {
-
-                }
-
-
-                @Override
-                public void onSearchConfirmed(CharSequence text) {
-                    getWeatherInformation(text.toString());
-
-                   searchBar.setLastSuggestions(strings);
-                }
-
-                @Override
-                public void onButtonClicked(int buttonCode) {
-
-                }
-            });
-
-            searchBar.setLastSuggestions(strings);
-            loading.setVisibility(View.GONE);
-
-        }
-    }
+//    private class LoadCities extends SimpleAsyncTask<List<CityDb>> {
+//
+//        @Override
+//        protected List<CityDb> doInBackgroundSimple() {
+//
+//            SqliteHelper sqliteHelper = new SqliteHelper(getContext());
+//
+//
+//            return sqliteHelper.getAllCitites();
+//        }
+//
+//        @RequiresApi(api = Build.VERSION_CODES.N)
+//        @Override
+//        protected void onSuccess(final List<CityDb> listCity) {
+//
+//            super.onSuccess(listCity);
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+//                strings = listCity.stream()
+//                        .map(object -> Objects.toString(object,null))
+//                        .collect(Collectors.toList());
+//            }
+//            searchBar.setEnabled(true);
+//            searchBar.addTextChangeListener(new TextWatcher() {
+//                @Override
+//                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+//
+//                }
+//
+//                @Override
+//                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+//
+//                    List<String> suggest = new ArrayList<>();
+//                    long startTime = SystemClock.elapsedRealtime();
+//                    for (CityDb search : listCity) {
+//                        if (search.getName().toLowerCase().contains(searchBar.getText().toLowerCase())) {
+//                            suggest.add(search.getName());
+//                        }
+//                    }
+//                    searchBar.setLastSuggestions(suggest);
+//                    Log.d("CityFragment","Time it took:" + (SystemClock.elapsedRealtime() - startTime));
+//
+//                }
+//
+//                @Override
+//                public void afterTextChanged(Editable editable) {
+////
+//                }
+//            });
+//
+//            searchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
+//
+//                @Override
+//                public void onSearchStateChanged(boolean enabled) {
+//
+//                }
+//
+//
+//                @Override
+//                public void onSearchConfirmed(CharSequence text) {
+//                    getWeatherInformation(text.toString());
+//
+//                   searchBar.setLastSuggestions(strings);
+//                }
+//
+//                @Override
+//                public void onButtonClicked(int buttonCode) {
+//
+//                }
+//            });
+//
+//            searchBar.setLastSuggestions(strings);
+//            loading.setVisibility(View.GONE);
+//
+//        }
+//    }
 
     private void getWeatherInformation(String cityName) {
         compositeDisposable.add(mService.getWeatherByCityName(cityName,
@@ -343,6 +348,9 @@ public class CityFragment extends Fragment {
 //                }
 //            });
 //    }
+
+
+
 
     @Override
     public void onDestroy() {

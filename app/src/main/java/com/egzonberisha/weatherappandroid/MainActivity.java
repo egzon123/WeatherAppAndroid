@@ -9,6 +9,8 @@ import androidx.viewpager.widget.ViewPager;
 import android.Manifest;
 
 import android.content.pm.PackageManager;
+import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
@@ -53,12 +55,20 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sqliteHelper = new SqliteHelper(this);
-        new LoadCities().execute();
+
+        //check if database exist
+            if(sqliteHelper.isEmpty(SqliteHelper.TABLE_CITIES)){
+                new LoadCities().execute();
+            }
+
+
+
         coordinatorLayout = findViewById(R.id.root_view);
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -158,4 +168,6 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
     }
+
+
 }
