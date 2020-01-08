@@ -61,25 +61,31 @@ public class SqliteHelper extends SQLiteOpenHelper {
 
     }
 
-    public CityDb retriveCityByName(String cityName) {
+    public List<String> searchForCity(String cityName) {
+        if(cityName.isEmpty()){
+            return new ArrayList<>();
+        }
+        List<String> toReturn = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.query(TABLE_CITIES,// Selecting Table
                 new String[]{KEY_ID, KEY_NAME},//Selecting columns want to query
-                KEY_NAME + "=?",
-                new String[]{cityName},
+                KEY_NAME + " LIKE ?",
+                new String[]{cityName+"%"},
                 null, null, null);
 
 
-        if (cursor != null && cursor.moveToFirst() && cursor.getCount() > 0) {
-            //if cursor has value then in user database there is user associated with this given email
-            CityDb city = new CityDb(cursor.getString(0), cursor.getString(1));
-
-            return city;
-
+        if (cursor.moveToFirst()){
+            do{
+                CityDb city = new CityDb(cursor.getString(0), cursor.getString(1));
+                toReturn.add(city.getName());
+                // do what ever you want here
+            }while(cursor.moveToNext());
         }
-        return null;
-    }
+        return toReturn;
+        }
+
+
 
     public void printData(){
         SQLiteDatabase db = this.getReadableDatabase();

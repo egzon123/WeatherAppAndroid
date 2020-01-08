@@ -69,16 +69,17 @@ public class CityFragment extends Fragment {
     private List<String> listCities;
     private MaterialSearchBar searchBar;
     private PublishSubject<String> mPublishSubject;
-    Context thiscontext;
-    List<String> strings;
 
+    List<String> strings;
+    private TextView mNoResultsTextview;
+    private SqliteHelper sqliteHelper;
 
 
     ImageView img_weather;
     TextView txt_city_name, txt_humidity, txt_sunrise, txt_sunset, txt_pressure, txt_temperature, txt_description, txt_date_time, txt_wind, txt_geo_coord;
     LinearLayout weather_panel;
     ProgressBar loading;
-    CompositeDisposable compositeDisposable;
+    CompositeDisposable disposables;
     IOpenWeatherMap mService;
 
     static CityFragment instance;
@@ -91,19 +92,22 @@ public class CityFragment extends Fragment {
     }
 
     public CityFragment() {
-        compositeDisposable = new CompositeDisposable();
+
         Retrofit retrofit = RetrofitClient.getInstance();
         mService = retrofit.create(IOpenWeatherMap.class);
-
-
-
     }
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        sqliteHelper = new SqliteHelper(context);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+
         View itemView = inflater.inflate(R.layout.fragment_city, container, false);
 
         img_weather = itemView.findViewById(R.id.img_weather);
@@ -121,76 +125,105 @@ public class CityFragment extends Fragment {
         weather_panel = itemView.findViewById(R.id.weather_panel);
         loading = itemView.findViewById(R.id.loading);
         searchBar = itemView.findViewById(R.id.searchBar);
+        mNoResultsTextview = itemView.findViewById(R.id.mNoResultsTextview);
+        disposables = new CompositeDisposable();
+        initObservable();
+
+//        listenToSearchInput();
 
 //        initObservable();
 //        listenToSearchInput();
-        searchBar.setEnabled(false);
+        searchBar.setEnabled(true);
+
+
 
 //       new LoadCities().execute(); // AsyncTask class to load Cities list
 
         return itemView;
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+
+    //
+    @SuppressLint("CheckResult")
+    private void initObservable() {
+        mPublishSubject = PublishSubject.create();
+        mPublishSubject
+                .debounce(400, TimeUnit.MILLISECONDS)
+                .map(searchString)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<String>>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        disposables.add(d);
+                    }
+
+                    @Override
+                    public void onNext(List<String> strings) {
+                        handleSearchResults(strings);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+
     }
+
+    private void handleSearchResults(List<String> strings) {
+        if (strings.isEmpty()) {
+            showNoSearchResults();
+        } else {
+            showSearchResults(strings);
+        }
+    }
+
+    private void showNoSearchResults() {
+        mNoResultsTextview.setVisibility(View.VISIBLE);
+
+    }
+
+
+    private void showSearchResults(List<String> cities) {
+        loading.setVisibility(View.GONE);
+        searchBar.setEnabled(true);
+        searchBar.addTextChangeListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                searchBar.setLastSuggestions(cities);
+                mPublishSubject.onNext(charSequence.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
 //
-//    @SuppressLint("CheckResult")
-//    private void initObservable() {
-//        mPublishSubject = PublishSubject.create();
-//        mPublishSubject
-//                .debounce(400, TimeUnit.MILLISECONDS)
-//                .map(searchString)
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe(new Observer<List<String>>() {
-//                    @Override
-//                    public void onSubscribe(Disposable d) {
-//                        compositeDisposable.add(d);
-//                    }
-//
-//                    @Override
-//                    public void onNext(List<String> strings) {
-//                        handleSearchResults(strings);
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable e) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onComplete() {
-//
-//                    }
-//                });
-//
-//    }
-//
-//    private void handleSearchResults(List<String> strings) {
-//        if (strings.isEmpty()) {
-//
-//        } else {
-//            showSearchResults(strings);
-//        }
-//    }
-//
-//
-//    private void showSearchResults(List<String> cities) {
-//        searchBar.setEnabled(true);
-//        searchBar.setLastSuggestions(cities);
-//    }
-//
-//
-//    Function<String, List<String>> searchString = new Function<String, List<String>>() {
-//        @Override
-//        public List<String> apply(String s) throws Exception {
-//            return null;
-//        }
-//
-//    };
-//
+            }
+        });
+        searchBar.setLastSuggestions(cities);
+    }
+
+
+
+    Function<String, List<String>> searchString = new Function<String, List<String>>() {
+        @Override
+        public List<String> apply(String s) throws Exception {
+
+            return sqliteHelper.searchForCity(s);
+        }
+
+    };
+
 //    private class LoadCities extends SimpleAsyncTask<List<CityDb>> {
 //
 //        @Override
@@ -262,13 +295,14 @@ public class CityFragment extends Fragment {
 //            });
 //
 //            searchBar.setLastSuggestions(strings);
-//            loading.setVisibility(View.GONE);
+//
 //
 //        }
 //    }
 
+
     private void getWeatherInformation(String cityName) {
-        compositeDisposable.add(mService.getWeatherByCityName(cityName,
+        disposables.add(mService.getWeatherByCityName(cityName,
                 Common.APP_ID,
                 "matric")
                 .subscribeOn(Schedulers.io())
@@ -309,8 +343,30 @@ public class CityFragment extends Fragment {
         );
 
     }
+
+    private void listenToSearchInput(){
+        searchBar.setEnabled(true);
+        searchBar.addTextChangeListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                mPublishSubject.onNext(charSequence.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+//
+            }
+        });
+    }
+
 //    private void listenToSearchInput() {
-//        searchBar.addTextChangeListener(new TextWatcher() {
+//        searchBar.setEnabled(true);
+//            searchBar.addTextChangeListener(new TextWatcher() {
 //                @Override
 //                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 //
@@ -319,27 +375,37 @@ public class CityFragment extends Fragment {
 //                @Override
 //                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 //
-//                    mPublishSubject.onNext(charSequence.toString());
+//                    List<String> suggest = new ArrayList<>();
+//                    long startTime = SystemClock.elapsedRealtime();
+//                    for (CityDb search : listCity) {
+//                        if (search.getName().toLowerCase().contains(searchBar.getText().toLowerCase())) {
+//                            suggest.add(search.getName());
+//                        }
+//                    }
+//                    searchBar.setLastSuggestions(suggest);
+//                    Log.d("CityFragment","Time it took:" + (SystemClock.elapsedRealtime() - startTime));
 //
 //                }
 //
 //                @Override
 //                public void afterTextChanged(Editable editable) {
-//
+////
 //                }
 //            });
 //
-//                    searchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
+//            searchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
 //
 //                @Override
 //                public void onSearchStateChanged(boolean enabled) {
 //
 //                }
 //
+//
 //                @Override
 //                public void onSearchConfirmed(CharSequence text) {
 //                    getWeatherInformation(text.toString());
-//                    searchBar.setLastSuggestions(listCities);
+//
+//                   searchBar.setLastSuggestions(strings);
 //                }
 //
 //                @Override
@@ -347,20 +413,24 @@ public class CityFragment extends Fragment {
 //
 //                }
 //            });
+//
+//            searchBar.setLastSuggestions(strings);
+//            loading.setVisibility(View.GONE);
+//
+//
+//
 //    }
-
-
 
 
     @Override
     public void onDestroy() {
-        compositeDisposable.clear();
+        disposables.clear();
         super.onDestroy();
     }
 
     @Override
     public void onStop() {
-        compositeDisposable.clear();
+        disposables.clear();
         super.onStop();
     }
 }

@@ -318,6 +318,15 @@
             />
 
     </FrameLayout>
+    <TextView
+        android:id="@+id/mNoResultsTextview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="No Result"
+        android:textColor="@android:color/white"
+        android:textSize="30sp"
+        android:gravity="center"/>
 
 
 </LinearLayout>
