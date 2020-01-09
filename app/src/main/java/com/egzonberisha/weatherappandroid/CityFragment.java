@@ -3,6 +3,7 @@ package com.egzonberisha.weatherappandroid;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.inputmethodservice.Keyboard;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -31,6 +32,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -69,8 +71,6 @@ public class CityFragment extends Fragment {
     private List<String> listCities;
     private MaterialSearchBar searchBar;
     private PublishSubject<String> mPublishSubject;
-
-    List<String> strings;
     private TextView mNoResultsTextview;
     private SqliteHelper sqliteHelper;
 
@@ -103,6 +103,8 @@ public class CityFragment extends Fragment {
         sqliteHelper = new SqliteHelper(context);
     }
 
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -127,14 +129,12 @@ public class CityFragment extends Fragment {
         searchBar = itemView.findViewById(R.id.searchBar);
         mNoResultsTextview = itemView.findViewById(R.id.mNoResultsTextview);
         disposables = new CompositeDisposable();
+        listCities = new ArrayList<>();
         initObservable();
-
-//        listenToSearchInput();
-
-//        initObservable();
-//        listenToSearchInput();
         searchBar.setEnabled(true);
 
+
+       listenToSearchInput();
 
 
 //       new LoadCities().execute(); // AsyncTask class to load Cities list
@@ -160,7 +160,17 @@ public class CityFragment extends Fragment {
 
                     @Override
                     public void onNext(List<String> strings) {
-                        handleSearchResults(strings);
+
+                        loading.setVisibility(View.GONE);
+                        if(strings.size() >1) {
+
+                            System.out.println("Inside showSearchResult --------->>>>>>> " + strings.size() + " -- " + strings.get(0));
+                            long startTime = SystemClock.elapsedRealtime();
+                            searchBar.setLastSuggestions(strings);
+                            searchBar.showSuggestionsList();
+                            searchConfirmed();
+                            Log.d("CityFragment", "Time it took:" + (SystemClock.elapsedRealtime() - startTime));
+                        }
                     }
 
                     @Override
@@ -178,7 +188,7 @@ public class CityFragment extends Fragment {
 
     private void handleSearchResults(List<String> strings) {
         if (strings.isEmpty()) {
-            showNoSearchResults();
+//            showNoSearchResults();
         } else {
             showSearchResults(strings);
         }
@@ -192,28 +202,15 @@ public class CityFragment extends Fragment {
 
     private void showSearchResults(List<String> cities) {
         loading.setVisibility(View.GONE);
-        searchBar.setEnabled(true);
-        searchBar.addTextChangeListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        if(cities.size() >1){
 
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                searchBar.setLastSuggestions(cities);
-                mPublishSubject.onNext(charSequence.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-//
-            }
-        });
+        System.out.println("Inside showSearchResult --------->>>>>>> "+cities.size()+" -- "+cities.get(0));
+        long startTime = SystemClock.elapsedRealtime();
         searchBar.setLastSuggestions(cities);
+        Log.d("CityFragment","Time it took:" + (SystemClock.elapsedRealtime() - startTime));
+
+        }
     }
-
-
 
     Function<String, List<String>> searchString = new Function<String, List<String>>() {
         @Override
@@ -223,6 +220,28 @@ public class CityFragment extends Fragment {
         }
 
     };
+
+    public void searchConfirmed(){
+        searchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
+
+                @Override
+                public void onSearchStateChanged(boolean enabled) {
+
+                }
+
+
+                @Override
+                public void onSearchConfirmed(CharSequence text) {
+                    getWeatherInformation(text.toString());
+                  getView().clearFocus();
+                }
+
+                @Override
+                public void onButtonClicked(int buttonCode) {
+
+                }
+            });
+    }
 
 //    private class LoadCities extends SimpleAsyncTask<List<CityDb>> {
 //
@@ -345,7 +364,7 @@ public class CityFragment extends Fragment {
     }
 
     private void listenToSearchInput(){
-        searchBar.setEnabled(true);
+
         searchBar.addTextChangeListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -354,6 +373,7 @@ public class CityFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                System.out.println("Inside LIsten toSearch -----------------------");
                 mPublishSubject.onNext(charSequence.toString());
             }
 
